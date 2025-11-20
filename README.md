@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Expense Tracker Frontend
 
-## Getting Started
+A modern Next.js application for tracking expenses using AWS Textract OCR. Upload receipt images and automatically extract expense data.
 
-First, run the development server:
+## Features
+
+- **Upload Receipt**: Drag-and-drop receipt images with automatic OCR processing
+- **Expense Management**: View, filter, and search through all expenses
+- **Dashboard**: Visualize spending patterns with interactive charts
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+
+## Tech Stack
+
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Recharts
+- Lucide React Icons
+
+## Setup
+
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Configure Environment Variables**:
+   Create a `.env.local` file in the root directory:
+   ```
+   NEXT_PUBLIC_API_BASE_URL=https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/Prod
+   ```
+   Replace with your actual API Gateway URL from the backend deployment.
+
+3. **Run Development Server**:
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000)
+
+## Build for Production
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Pages
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **`/`** - Homepage with feature overview
+- **`/upload`** - Upload receipt images
+- **`/expenses`** - View and filter all expenses
+- **`/dashboard`** - Analytics and spending trends
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## API Integration
 
-## Learn More
+The frontend connects to the AWS backend using the following endpoints:
 
-To learn more about Next.js, take a look at the following resources:
+- `POST /upload-url` - Get S3 signed URL
+- `GET /expenses` - Retrieve all expenses
+- `GET /summary?month=YYYY-MM` - Get monthly summary
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Option 1: Vercel (Recommended)
+1. Push code to GitHub
+2. Import project to Vercel
+3. Add `NEXT_PUBLIC_API_BASE_URL` environment variable
+4. Deploy
 
-## Deploy on Vercel
+### Option 2: AWS Amplify
+1. Connect GitHub repository
+2. Configure build settings
+3. Add environment variables
+4. Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Option 3: Static Export to S3
+```bash
+npm run build
+# Upload the 'out' directory to S3
+# Configure CloudFront distribution
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `NEXT_PUBLIC_API_BASE_URL` | Backend API Gateway URL | `https://abc123.execute-api.us-east-1.amazonaws.com/Prod` |
+
+## Notes
+
+- Ensure the backend is deployed and accessible before running the frontend
+- The app uses polling to detect when OCR processing is complete
+- Receipt images are stored in S3 and accessible via the backend
