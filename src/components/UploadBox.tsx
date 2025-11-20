@@ -1,9 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { Upload, CheckCircle, XCircle } from 'lucide-react';
-import { getUploadUrl, uploadToS3, getExpenses } from '@/lib/api';
-import Loader from './Loader';
+import { useState, useRef } from "react";
+import { Upload, CheckCircle, XCircle } from "lucide-react";
+import {
+  getUploadUrl,
+  uploadToS3,
+  processReceipt,
+  getExpenses,
+} from "@/lib/api";
+import Loader from "./Loader";
 
 interface ExtractedData {
   merchant: string;
@@ -16,27 +21,31 @@ export default function UploadBox() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
-  const [error, setError] = useState('');
+  const [extractedData, setExtractedData] = useState<ExtractedData | null>(
+    null
+  );
+  const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (selectedFile: File | null) => {
-    if (selectedFile && selectedFile.type.startsWith('image/')) {
+    if (selectedFile && selectedFile.type.startsWith("image/")) {
       setFile(selectedFile);
-      setError('');
+      setError("");
       setExtractedData(null);
     } else {
-      setError('Please select a valid image file');
+      setError("Please select a valid image file");
     }
   };
 
-  const pollForExpense = async (startTime: number): Promise<ExtractedData | null> => {
+  const pollForExpense = async (
+    startTime: number
+  ): Promise<ExtractedData | null> => {
     const maxAttempts = 20;
     const pollInterval = 3000; // 3 seconds
 
     for (let i = 0; i < maxAttempts; i++) {
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
-      
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+
       try {
         const expenses = await getExpenses();
         // Find the most recent expense created after upload
@@ -47,14 +56,14 @@ export default function UploadBox() {
 
         if (recentExpense) {
           return {
-            merchant: recentExpense.merchant || 'Unknown',
-            date: recentExpense.date || '',
+            merchant: recentExpense.merchant || "Unknown",
+            date: recentExpense.date || "",
             total: recentExpense.total || 0,
-            category: recentExpense.category || 'General',
+            category: recentExpense.category || "General",
           };
         }
       } catch (err) {
-        console.error('Polling error:', err);
+        console.error("Polling error:", err);
       }
     }
     return null;
@@ -65,13 +74,16 @@ export default function UploadBox() {
 
     try {
       setUploading(true);
-      setError('');
+      setError("");
 
       // Get signed URL
       const { uploadUrl, key } = await getUploadUrl(file.type);
 
       // Upload to S3
       await uploadToS3(uploadUrl, file);
+
+      // Process the receipt
+      await processReceipt(key);
 
       setUploading(false);
       setProcessing(true);
@@ -83,12 +95,12 @@ export default function UploadBox() {
       if (result) {
         setExtractedData(result);
       } else {
-        setError('Processing took too long. Please check the expenses page.');
+        setError("Processing took too long. Please check the expenses page.");
       }
 
       setProcessing(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(err instanceof Error ? err.message : "Upload failed");
       setUploading(false);
       setProcessing(false);
     }
@@ -114,7 +126,7 @@ export default function UploadBox() {
         />
         <Upload className="h-16 w-16 mx-auto text-indigo-600 mb-4" />
         <p className="text-xl font-semibold text-gray-700 mb-2">
-          {file ? file.name : 'Drop receipt image here or click to browse'}
+          {file ? file.name : "Drop receipt image here or click to browse"}
         </p>
         <p className="text-sm text-gray-500">Supports: JPG, PNG</p>
       </div>
@@ -147,19 +159,27 @@ export default function UploadBox() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Merchant</p>
-              <p className="font-semibold text-gray-800">{extractedData.merchant}</p>
+              <p className="font-semibold text-gray-800">
+                {extractedData.merchant}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Date</p>
-              <p className="font-semibold text-gray-800">{extractedData.date}</p>
+              <p className="font-semibold text-gray-800">
+                {extractedData.date}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Amount</p>
-              <p className="font-semibold text-gray-800">${extractedData.total.toFixed(2)}</p>
+              <p className="font-semibold text-gray-800">
+                ${extractedData.total.toFixed(2)}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Category</p>
-              <p className="font-semibold text-gray-800">{extractedData.category}</p>
+              <p className="font-semibold text-gray-800">
+                {extractedData.category}
+              </p>
             </div>
           </div>
         </div>
